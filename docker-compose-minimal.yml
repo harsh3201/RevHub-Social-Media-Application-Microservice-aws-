@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # Infrastructure Only
+  consul:
+    image: consul:1.15
+    container_name: revhub-consul
+    ports:
+      - "8500:8500"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    networks:
+      - revhub-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: revhub-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - revhub-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: revhub-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - revhub-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: revhub-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: revhub
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./infrastructure/databases/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - revhub-network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: revhub-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./infrastructure/databases/mongodb-init.js:/docker-entrypoint-initdb.d/init.js
+    networks:
+      - revhub-network
+
+networks:
+  revhub-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  mongo-data:

@@ -1,0 +1,15 @@
+{
+  "datacenter": "dc1",
+  "data_dir": "/consul/data",
+  "log_level": "INFO",
+  "server": true,
+  "ui": true,
+  "bootstrap_expect": 1,
+  "client_addr": "0.0.0.0",
+  "ports": {
+    "http": 8500,
+    "dns": 8600
+  },
+  "enable_script_checks": false,
+  "disable_remote_exec": true
+}

@@ -1,0 +1,326 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  consul:
+    image: consul:1.15
+    container_name: revhub-consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - revhub-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: revhub-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - revhub-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: revhub-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - revhub-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: revhub-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: revhub
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - revhub-network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: revhub-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      revhub-network:
+        aliases:
+          - mongodb
+
+  # Backend Microservices
+  api-gateway:
+    build:
+      context: ./backend-services/api-gateway
+      dockerfile: Dockerfile
+    container_name: revhub-api-gateway
+    hostname: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      CONSUL_HOST: consul
+      HOSTNAME: api-gateway
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./backend-services/user-service
+      dockerfile: Dockerfile
+    container_name: revhub-user-service
+    hostname: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      CONSUL_HOST: consul
+      DB_HOST: mysql
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HOSTNAME: user-service
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  post-service:
+    build:
+      context: ./backend-services/post-service
+      dockerfile: Dockerfile
+    container_name: revhub-post-service
+    hostname: post-service
+    ports:
+      - "8082:8082"
+    environment:
+      CONSUL_HOST: consul
+      DB_HOST: mysql
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HOSTNAME: post-service
+      SOCIAL_SERVICE_HOST: social-service:8083
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  social-service:
+    build:
+      context: ./backend-services/social-service
+      dockerfile: Dockerfile
+    container_name: revhub-social-service
+    hostname: social-service
+    ports:
+      - "8083:8083"
+    environment:
+      CONSUL_HOST: consul
+      DB_HOST: mysql
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HOSTNAME: social-service
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  chat-service:
+    build:
+      context: ./backend-services/chat-service
+      dockerfile: Dockerfile
+    container_name: revhub-chat-service
+    hostname: chat-service
+    ports:
+      - "8084:8084"
+    environment:
+      CONSUL_HOST: consul
+      MONGODB_HOST: mongodb
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HOSTNAME: chat-service
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./backend-services/notification-service
+      dockerfile: Dockerfile
+    container_name: revhub-notification-service
+    hostname: notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      CONSUL_HOST: consul
+      MONGODB_HOST: mongodb
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HOSTNAME: notification-service
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  feed-service:
+    build:
+      context: ./backend-services/feed-service
+      dockerfile: Dockerfile
+    container_name: revhub-feed-service
+    hostname: feed-service
+    ports:
+      - "8086:8086"
+    environment:
+      CONSUL_HOST: consul
+      MONGODB_HOST: mongodb
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HOSTNAME: feed-service
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  search-service:
+    build:
+      context: ./backend-services/search-service
+      dockerfile: Dockerfile
+    container_name: revhub-search-service
+    hostname: search-service
+    ports:
+      - "8087:8087"
+    environment:
+      CONSUL_HOST: consul
+      MONGODB_HOST: mongodb
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HOSTNAME: search-service
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+  saga-orchestrator:
+    build:
+      context: ./backend-services/saga-orchestrator
+      dockerfile: Dockerfile
+    container_name: revhub-saga-orchestrator
+    hostname: saga-orchestrator
+    ports:
+      - "8088:8088"
+    environment:
+      CONSUL_HOST: consul
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DB_HOST: mysql
+      HOSTNAME: saga-orchestrator
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      consul:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - revhub-network
+    restart: unless-stopped
+
+networks:
+  revhub-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  mongo-data:
