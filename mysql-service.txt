@@ -1,0 +1,18 @@
+﻿  # MySQL - Using Docker MySQL container (port 3307 to avoid local MySQL conflict)
+  mysql:
+    image: mysql:8.0
+    container_name: revhub-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Harsh@4801
+      MYSQL_DATABASE: revhub
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - revhub-network
