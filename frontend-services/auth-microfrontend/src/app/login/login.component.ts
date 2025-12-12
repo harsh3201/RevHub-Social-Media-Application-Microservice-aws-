@@ -34,6 +34,7 @@ import { MatButtonModule } from '@angular/material/button';
             {{loading ? 'Loading...' : 'Login'}}
           </button>
           <p class="auth-link">Don't have an account? <a routerLink="/auth/register" class="link-primary">Sign up</a></p>
+          <p class="auth-link forgot-link">🔑 <a routerLink="/auth/forgot-password" class="link-secondary">Forgot Password?</a></p>
         </form>
       </mat-card>
     </div>
@@ -48,8 +49,11 @@ import { MatButtonModule } from '@angular/material/button';
     .full-width { width: 100%; }
     .auth-btn { width: 100%; height: 48px; font-size: 16px; font-weight: 600; border-radius: 8px; }
     .auth-link { text-align: center; margin-top: 16px; color: #6B7280; }
+    .forgot-link { margin-top: 8px; font-size: 14px; }
     .link-primary { color: #4A90E2; text-decoration: none; font-weight: 600; }
     .link-primary:hover { text-decoration: underline; }
+    .link-secondary { color: #6B7280; text-decoration: none; }
+    .link-secondary:hover { text-decoration: underline; color: #4A90E2; }
   `]
 })
 export class LoginComponent {
@@ -57,12 +61,12 @@ export class LoginComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
   loading = false;
-  
+
   loginForm = this.fb.group({
     username: ['', Validators.required],
     password: ['', Validators.required]
   });
-  
+
   onSubmit() {
     this.loading = true;
     if (this.loginForm.valid) {

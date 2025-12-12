@@ -41,7 +41,7 @@ services:
     image: mysql:8.0
     container_name: revhub-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: Harsh@4801
       MYSQL_DATABASE: revhub
     ports:
       - "3306:3306"
