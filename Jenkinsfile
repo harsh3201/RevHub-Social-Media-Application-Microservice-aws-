@@ -107,18 +107,14 @@ pipeline {
                             sh 'docker-compose -f docker-compose.yml push'
                             sh 'docker-compose -f docker-compose.frontend.yml push'
                         } else {
-                            // POWERSHELL LOGIN STRATEGY (Best for Windows consistency)
-                            // 1. Write password to file
-                            writeFile file: 'docker_pass.txt', text: DOCKER_PASS
+                            // Revert to Batch as PowerShell is not available in PATH
+                            // Login Strategy: Write token to file -> Type contents into docker login -> Delete file
+                            writeFile file: 'docker_pass.txt', text: DOCKER_PASS, encoding: 'UTF-8'
                             
-                            // 2. Use PowerShell to check length (DEBUG) and login
-                            powershell '''
-                                $pass = Get-Content docker_pass.txt
-                                Write-Host "DEBUG: Password length is $($pass.Length)"
-                                Get-Content docker_pass.txt | docker login -u $env:DOCKER_USER --password-stdin
-                            '''
+                            // Use 'type' to pipe the file content to stdin. 
+                            // This avoids 'echo' command trailing space issues.
+                            bat 'type docker_pass.txt | docker login -u %DOCKER_USER% --password-stdin'
                             
-                            // 3. Cleanup
                             bat 'del docker_pass.txt'
                             
                             bat 'docker-compose -f docker-compose.yml push'
