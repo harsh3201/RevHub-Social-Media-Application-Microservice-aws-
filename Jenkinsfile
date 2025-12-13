@@ -107,8 +107,8 @@ pipeline {
                             sh 'docker-compose -f docker-compose.yml push'
                             sh 'docker-compose -f docker-compose.frontend.yml push'
                         } else {
-                            // Direct login command to avoid pipe/echo issues on Windows
-                            bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
+                            // Direct login command with quotes to handle special chars safe
+                            bat 'docker login -u "%DOCKER_USER%" -p "%DOCKER_PASS%"'
                             bat 'docker-compose -f docker-compose.yml push'
                             bat 'docker-compose -f docker-compose.frontend.yml push'
                         }
