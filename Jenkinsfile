@@ -107,9 +107,12 @@ pipeline {
                             sh 'docker-compose -f docker-compose.yml push'
                             sh 'docker-compose -f docker-compose.frontend.yml push'
                         } else {
-                            // Secure login using stdin (Standard Input) to avoid special char issues
-                            // NOTE: No space before pipe | is CRITICAL on Windows
-                            bat 'echo %DOCKER_PASS%| docker login -u %DOCKER_USER% --password-stdin'
+                            // ROBUST WINDOWS LOGIN STRATEGY:
+                            // Write password to a file to avoid ANY whitespace/quoting compilation issues in CMD
+                            writeFile file: 'docker_pass.txt', text: DOCKER_PASS
+                            bat 'type docker_pass.txt | docker login -u %DOCKER_USER% --password-stdin'
+                            bat 'del docker_pass.txt'
+                            
                             bat 'docker-compose -f docker-compose.yml push'
                             bat 'docker-compose -f docker-compose.frontend.yml push'
                         }
