@@ -7,12 +7,13 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    selector: 'app-reset-password',
-    standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
-    template: `
+  selector: 'app-reset-password',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
+  template: `
     <div class="auth-container">
       <mat-card class="auth-card">
         <div class="auth-header">
@@ -54,7 +55,7 @@ import { MatButtonModule } from '@angular/material/button';
       </mat-card>
     </div>
   `,
-    styles: [`
+  styles: [`
     .auth-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .auth-card { width: 100%; max-width: 450px; padding: 40px; border-radius: 16px; box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3); background: white; }
     .auth-header { text-align: center; margin-bottom: 30px; }
@@ -71,53 +72,53 @@ import { MatButtonModule } from '@angular/material/button';
   `]
 })
 export class ResetPasswordComponent {
-    private fb = inject(FormBuilder);
-    private http = inject(HttpClient);
-    private router = inject(Router);
-    private route = inject(ActivatedRoute);
-    loading = false;
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  loading = false;
 
-    resetForm = this.fb.group({
-        email: ['', [Validators.required, Validators.email]],
-        otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
-        newPassword: ['', [Validators.required, Validators.minLength(6)]],
-        confirmPassword: ['', Validators.required]
-    }, { validators: this.passwordMatchValidator });
+  resetForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+    newPassword: ['', [Validators.required, Validators.minLength(6)]],
+    confirmPassword: ['', Validators.required]
+  }, { validators: this.passwordMatchValidator });
 
-    ngOnInit() {
-        // Get email from query params if available
-        this.route.queryParams.subscribe(params => {
-            if (params['email']) {
-                this.resetForm.patchValue({ email: params['email'] });
-            }
-        });
+  ngOnInit() {
+    // Get email from query params if available
+    this.route.queryParams.subscribe(params => {
+      if (params['email']) {
+        this.resetForm.patchValue({ email: params['email'] });
+      }
+    });
+  }
+
+  passwordMatchValidator(form: any) {
+    const password = form.get('newPassword');
+    const confirmPassword = form.get('confirmPassword');
+
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      return { passwordMismatch: true };
     }
+    return null;
+  }
 
-    passwordMatchValidator(form: any) {
-        const password = form.get('newPassword');
-        const confirmPassword = form.get('confirmPassword');
-
-        if (password && confirmPassword && password.value !== confirmPassword.value) {
-            return { passwordMismatch: true };
+  onSubmit() {
+    this.loading = true;
+    if (this.resetForm.valid) {
+      const { email, otp, newPassword } = this.resetForm.value;
+      this.http.post('http://localhost:8090/api/auth/reset-password', { email, otp, newPassword }).subscribe({
+        next: (response: any) => {
+          this.loading = false;
+          alert('Password reset successfully! You can now login with your new password.');
+          this.router.navigate(['/auth/login']);
+        },
+        error: (error) => {
+          this.loading = false;
+          alert('Failed: ' + (error.error?.error || error.error?.message || 'Please try again'));
         }
-        return null;
+      });
     }
-
-    onSubmit() {
-        this.loading = true;
-        if (this.resetForm.valid) {
-            const { email, otp, newPassword } = this.resetForm.value;
-            this.http.post('http://localhost:8080/api/auth/reset-password', { email, otp, newPassword }).subscribe({
-                next: (response: any) => {
-                    this.loading = false;
-                    alert('Password reset successfully! You can now login with your new password.');
-                    this.router.navigate(['/auth/login']);
-                },
-                error: (error) => {
-                    this.loading = false;
-                    alert('Failed: ' + (error.error?.error || error.error?.message || 'Please try again'));
-                }
-            });
-        }
-    }
+  }
 }

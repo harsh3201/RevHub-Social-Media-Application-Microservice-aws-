@@ -102,10 +102,11 @@ services:
     build:
       context: ./backend-services/api-gateway
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-api-gateway
     container_name: revhub-api-gateway
     hostname: api-gateway
     ports:
-      - "8080:8080"
+      - "8090:8080"
     environment:
       CONSUL_HOST: consul
       HOSTNAME: api-gateway
@@ -121,6 +122,7 @@ services:
     build:
       context: ./backend-services/user-service
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-user-service
     container_name: revhub-user-service
     hostname: user-service
     ports:
@@ -147,6 +149,7 @@ services:
     build:
       context: ./backend-services/post-service
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-post-service
     container_name: revhub-post-service
     hostname: post-service
     ports:
@@ -174,6 +177,7 @@ services:
     build:
       context: ./backend-services/social-service
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-social-service
     container_name: revhub-social-service
     hostname: social-service
     ports:
@@ -200,6 +204,7 @@ services:
     build:
       context: ./backend-services/chat-service
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-chat-service
     container_name: revhub-chat-service
     hostname: chat-service
     ports:
@@ -225,6 +230,7 @@ services:
     build:
       context: ./backend-services/notification-service
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-notification-service
     container_name: revhub-notification-service
     hostname: notification-service
     ports:
@@ -250,6 +256,7 @@ services:
     build:
       context: ./backend-services/feed-service
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-feed-service
     container_name: revhub-feed-service
     hostname: feed-service
     ports:
@@ -275,6 +282,7 @@ services:
     build:
       context: ./backend-services/search-service
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-search-service
     container_name: revhub-search-service
     hostname: search-service
     ports:
@@ -300,6 +308,7 @@ services:
     build:
       context: ./backend-services/saga-orchestrator
       dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-saga-orchestrator
     container_name: revhub-saga-orchestrator
     hostname: saga-orchestrator
     ports:

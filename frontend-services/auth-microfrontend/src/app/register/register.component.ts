@@ -102,7 +102,7 @@ export class RegisterComponent {
   onSubmit() {
     if (this.registerForm.valid) {
       this.loading = true;
-      this.http.post('http://localhost:8080/api/auth/register', this.registerForm.value).subscribe({
+      this.http.post('http://localhost:8090/api/auth/register', this.registerForm.value).subscribe({
         next: (response: any) => {
           this.loading = false;
           this.userEmail = this.registerForm.value.email || '';
@@ -120,7 +120,7 @@ export class RegisterComponent {
   onVerifyOtp() {
     if (this.otpForm.valid) {
       this.loading = true;
-      this.http.post('http://localhost:8080/api/auth/verify-otp', {
+      this.http.post('http://localhost:8090/api/auth/verify-otp', {
         email: this.userEmail,
         otp: this.otpForm.value.otp
       }).subscribe({

@@ -17,7 +17,7 @@ export interface Post {
   providedIn: 'root'
 })
 export class FeedService {
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = 'http://localhost:8090/api';
 
   constructor(private http: HttpClient) {}
 

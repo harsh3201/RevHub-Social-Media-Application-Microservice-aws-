@@ -6,8 +6,8 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class PostService {
-  private apiUrl = 'http://localhost:8080/api/posts';
-  private socialUrl = 'http://localhost:8080/api/social';
+  private apiUrl = 'http://localhost:8090/api/posts';
+  private socialUrl = 'http://localhost:8090/api/social';
 
   constructor(private http: HttpClient) {}
 

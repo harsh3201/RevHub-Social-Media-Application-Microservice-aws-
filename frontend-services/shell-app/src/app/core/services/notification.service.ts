@@ -16,7 +16,7 @@ export interface Notification {
   providedIn: 'root'
 })
 export class NotificationService {
-  private apiUrl = 'http://localhost:8080/api/notifications';
+  private apiUrl = 'http://localhost:8090/api/notifications';
 
   constructor(private http: HttpClient) {}
 
@@ -48,10 +48,10 @@ export class NotificationService {
   }
 
   acceptFollowRequest(followRequestId: string): Observable<any> {
-    return this.http.post(`http://localhost:8080/api/social/follow-request/${followRequestId}/accept`, {});
+    return this.http.post(`http://localhost:8090/api/social/follow-request/${followRequestId}/accept`, {});
   }
 
   rejectFollowRequest(followRequestId: string): Observable<any> {
-    return this.http.post(`http://localhost:8080/api/social/follow-request/${followRequestId}/reject`, {});
+    return this.http.post(`http://localhost:8090/api/social/follow-request/${followRequestId}/reject`, {});
   }
 }

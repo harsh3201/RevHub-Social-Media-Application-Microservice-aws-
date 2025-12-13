@@ -66,7 +66,7 @@ export class NotificationListComponent implements OnInit {
       console.error('No user found in localStorage');
       return;
     }
-    const url = `http://localhost:8080/api/notifications/${userId}`;
+    const url = `http://localhost:8090/api/notifications/${userId}`;
     console.log('Fetching notifications from:', url);
     this.http.get<any[]>(url).subscribe({
       next: (data) => {
@@ -82,7 +82,7 @@ export class NotificationListComponent implements OnInit {
   }
   
   markAsRead(notificationId: string) {
-    this.http.put(`http://localhost:8080/api/notifications/${notificationId}/read`, {}).subscribe({
+    this.http.put(`http://localhost:8090/api/notifications/${notificationId}/read`, {}).subscribe({
       next: () => this.loadNotifications(),
       error: (error) => console.error('Error marking as read:', error)
     });

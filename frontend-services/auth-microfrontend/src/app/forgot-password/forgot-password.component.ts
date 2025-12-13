@@ -7,11 +7,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
   template: `
     <div class="auth-container">
       <mat-card class="auth-card">
@@ -71,7 +72,7 @@ export class ForgotPasswordComponent {
     this.successMessage = '';
     if (this.resetForm.valid) {
       const email = this.resetForm.value.email || '';
-      this.http.post('http://localhost:8080/api/auth/forgot-password', { email }).subscribe({
+      this.http.post('http://localhost:8090/api/auth/forgot-password', { email }).subscribe({
         next: (response: any) => {
           this.loading = false;
           this.successMessage = 'OTP sent to your email! Redirecting...';
