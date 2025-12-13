@@ -52,29 +52,25 @@ pipeline {
         }
 
         stage('Build Docker Images') {
-            parallel {
-                stage('Build Backend') {
-                    steps {
+            steps {
+                echo 'Building Docker Images (Sequential to save resources)...'
+                script {
+                    if (isUnix()) {
+                        // Build Backend first
                         echo 'Building Backend Images...'
-                        script {
-                            if (isUnix()) {
-                                sh 'docker-compose -f docker-compose.yml build --parallel'
-                            } else {
-                                bat 'docker-compose -f docker-compose.yml build --parallel'
-                            }
-                        }
-                    }
-                }
-                stage('Build Frontend') {
-                    steps {
+                        sh 'docker-compose -f docker-compose.yml build'
+                        
+                        // Build Frontend second
                         echo 'Building Frontend Images...'
-                        script {
-                            if (isUnix()) {
-                                sh 'docker-compose -f docker-compose.frontend.yml build --parallel'
-                            } else {
-                                bat 'docker-compose -f docker-compose.frontend.yml build --parallel'
-                            }
-                        }
+                        sh 'docker-compose -f docker-compose.frontend.yml build'
+                    } else {
+                        // Build Backend first
+                        echo 'Building Backend Images...'
+                        bat 'docker-compose -f docker-compose.yml build'
+                        
+                        // Build Frontend second
+                        echo 'Building Frontend Images...'
+                        bat 'docker-compose -f docker-compose.frontend.yml build'
                     }
                 }
             }
