@@ -107,7 +107,8 @@ pipeline {
                             sh 'docker-compose -f docker-compose.yml push'
                             sh 'docker-compose -f docker-compose.frontend.yml push'
                         } else {
-                            bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
+                            // Remove space before pipe to prevent trailing space in password
+                            bat '@echo %DOCKER_PASS%| docker login -u %DOCKER_USER% --password-stdin'
                             bat 'docker-compose -f docker-compose.yml push'
                             bat 'docker-compose -f docker-compose.frontend.yml push'
                         }
