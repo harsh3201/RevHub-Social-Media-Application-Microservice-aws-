@@ -52,15 +52,29 @@ pipeline {
         }
 
         stage('Build Docker Images') {
-            steps {
-                echo 'Building Docker Images...'
-                script {
-                    if (isUnix()) {
-                        sh 'docker-compose -f docker-compose.yml build'
-                        sh 'docker-compose -f docker-compose.frontend.yml build'
-                    } else {
-                        bat 'docker-compose -f docker-compose.yml build'
-                        bat 'docker-compose -f docker-compose.frontend.yml build'
+            parallel {
+                stage('Build Backend') {
+                    steps {
+                        echo 'Building Backend Images...'
+                        script {
+                            if (isUnix()) {
+                                sh 'docker-compose -f docker-compose.yml build --parallel'
+                            } else {
+                                bat 'docker-compose -f docker-compose.yml build --parallel'
+                            }
+                        }
+                    }
+                }
+                stage('Build Frontend') {
+                    steps {
+                        echo 'Building Frontend Images...'
+                        script {
+                            if (isUnix()) {
+                                sh 'docker-compose -f docker-compose.frontend.yml build --parallel'
+                            } else {
+                                bat 'docker-compose -f docker-compose.frontend.yml build --parallel'
+                            }
+                        }
                     }
                 }
             }
