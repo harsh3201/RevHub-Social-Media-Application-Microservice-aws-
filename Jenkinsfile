@@ -3,11 +3,10 @@ pipeline {
 
     environment {
         // --- CONFIGURATION ---
-        // Set these in Jenkins: Manage Jenkins -> Nodes -> Env vars OR inside the Pipeline Job configuration
-        // DOCKER_HUB_USERNAME = 'your-dockerhub-username' 
-        // DOCKER_HUB_CREDENTIALS_ID = 'docker-hub-credentials-id'
-        // EC2_SSH_CREDENTIALS_ID = 'ec2-ssh-key-id'
-        // EC2_IP = 'your-ec2-public-ip'
+        DOCKER_HUB_USERNAME = 'harsh3201' 
+        DOCKER_HUB_CREDENTIALS_ID = 'docker-hub-credentials-id'
+        EC2_SSH_CREDENTIALS_ID = 'ec2-ssh-key-id'
+        EC2_IP = 'your-ec2-public-ip' // <--- IMPORTANT: UPDATE THIS WITH YOUR ACTUAL EC2 IP IN JENKINS OR HERE
         
         COMPOSE_PROJECT_NAME = "revhub_cicd"
     }
