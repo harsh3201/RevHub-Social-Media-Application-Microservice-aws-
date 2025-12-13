@@ -14,7 +14,7 @@ pipeline {
 
     tools {
         // Requires 'Maven' to be configured in Jenkins Global Tool Configuration
-        maven 'Maven 3'
+        maven 'MAVEN3'
     }
 
     stages {
