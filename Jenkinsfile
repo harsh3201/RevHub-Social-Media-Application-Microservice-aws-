@@ -53,24 +53,44 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                echo 'Building Docker Images (Sequential to save resources)...'
+                echo 'Building Docker Images (Sequentially one-by-one to save resources)...'
                 script {
+                    // List of services EXACTLY as they appear in docker-compose.yml
+                    def backendServices = [
+                        'api-gateway', 'user-service', 'post-service',
+                        'social-service', 'chat-service', 'feed-service',
+                        'notification-service', 'search-service', 'saga-orchestrator'
+                    ]
+                    
+                    def frontendServices = [
+                        'shell-app', 'auth-microfrontend', 'profile-microfrontend',
+                        'feed-microfrontend', 'chat-microfrontend', 'notifications-microfrontend'
+                    ]
+
                     if (isUnix()) {
-                        // Build Backend first
-                        echo 'Building Backend Images...'
-                        sh 'docker-compose -f docker-compose.yml build'
+                        // Build Backend Services one by one
+                        backendServices.each { service ->
+                            echo "Building Backend: ${service}..."
+                            sh "docker-compose -f docker-compose.yml build ${service}"
+                        }
                         
-                        // Build Frontend second
-                        echo 'Building Frontend Images...'
-                        sh 'docker-compose -f docker-compose.frontend.yml build'
+                        // Build Frontend Services one by one
+                        frontendServices.each { service ->
+                            echo "Building Frontend: ${service}..."
+                            sh "docker-compose -f docker-compose.frontend.yml build ${service}"
+                        }
                     } else {
-                        // Build Backend first
-                        echo 'Building Backend Images...'
-                        bat 'docker-compose -f docker-compose.yml build'
+                        // Build Backend Services one by one
+                        backendServices.each { service ->
+                            echo "Building Backend: ${service}..."
+                            bat "docker-compose -f docker-compose.yml build ${service}"
+                        }
                         
-                        // Build Frontend second
-                        echo 'Building Frontend Images...'
-                        bat 'docker-compose -f docker-compose.frontend.yml build'
+                        // Build Frontend Services one by one
+                        frontendServices.each { service ->
+                            echo "Building Frontend: ${service}..."
+                            bat "docker-compose -f docker-compose.frontend.yml build ${service}"
+                        }
                     }
                 }
             }
