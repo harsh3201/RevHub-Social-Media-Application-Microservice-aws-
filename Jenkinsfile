@@ -109,7 +109,8 @@ pipeline {
                         } else {
                             // Revert to Batch as PowerShell is not available in PATH
                             // Login Strategy: Write token to file -> Type contents into docker login -> Delete file
-                            writeFile file: 'docker_pass.txt', text: DOCKER_PASS, encoding: 'UTF-8'
+                            // VITAL FIX: .trim() removes any accidental newlines/spaces from the credential
+                            writeFile file: 'docker_pass.txt', text: DOCKER_PASS.trim(), encoding: 'UTF-8'
                             
                             // Use 'type' to pipe the file content to stdin. 
                             // This avoids 'echo' command trailing space issues.
