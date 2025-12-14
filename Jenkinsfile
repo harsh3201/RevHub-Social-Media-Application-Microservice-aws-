@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // --- CONFIGURATION ---
-        DOCKER_HUB_USERNAME = 'Harsh4801' 
+        DOCKER_HUB_USERNAME = 'harsh4801' 
         DOCKER_HUB_CREDENTIALS_ID = 'docker-hub-token-id-new'
         EC2_SSH_CREDENTIALS_ID = 'ec2-ssh-key-id'
         EC2_IP = '54.243.234.6' // Updated from new user screenshot
@@ -109,12 +109,20 @@ pipeline {
                         } else {
                             // Revert to Batch as PowerShell is not available in PATH
                             // Login Strategy: Write token to file -> Type contents into docker login -> Delete file
+                            
+                            // DEBUG: Print token length to verify we are getting the right credential
+                            echo "DEBUG: Token Length: ${DOCKER_PASS.trim().length()}"
+                            
                             // VITAL FIX: .trim() removes any accidental newlines/spaces from the credential
                             writeFile file: 'docker_pass.txt', text: DOCKER_PASS.trim(), encoding: 'UTF-8'
                             
+                            // Logout first to clear any stale state
+                            bat 'docker logout || exit 0'
+
                             // Use 'type' to pipe the file content to stdin. 
                             // This avoids 'echo' command trailing space issues.
-                            bat 'type docker_pass.txt | docker login -u %DOCKER_USER% --password-stdin'
+                            // Use global DOCKER_HUB_USERNAME to ensure no copy-paste errors in credential username
+                            bat "type docker_pass.txt | docker login -u ${DOCKER_HUB_USERNAME} --password-stdin"
                             
                             bat 'del docker_pass.txt'
                             
