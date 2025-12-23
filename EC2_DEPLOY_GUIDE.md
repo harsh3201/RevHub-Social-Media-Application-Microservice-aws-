@@ -48,6 +48,25 @@ This guide walks you through setting up your AWS EC2 instance to host the RevHub
     ```
 3.  **Log out and log back in** for group changes to take effect.
 
+## Step 2.5: (CRITICAL FOR FREE TIER) Enable Swap Space
+**⚠️ IMPORTANT:** If you are using a **t2.micro** or **t3.micro** (Free Tier) instance, it only has **1GB RAM**. Your application requires at least **4GB RAM**. The ONLY way to run it is to enable "Swap Space" (using Hard Disk as RAM).
+
+1.  SSH into your instance.
+2.  Copy or create the `setup_swap.sh` script:
+    ```bash
+    nano setup_swap.sh
+    # Paste the content from the local setup_swap.sh file
+    # Ctrl+O -> Enter -> Ctrl+X to save and exit
+    ```
+3.  Run the script:
+    ```bash
+    chmod +x setup_swap.sh
+    ./setup_swap.sh
+    ```
+4.  **Verification**: Type `free -h` and ensure you see `4.0Gi` under `Swap`.
+
+**Note:** Application performance on Free Tier will be significantly slower due to disk I/O.
+
 ## Step 3: Deployment Strategies
 
 ### Option A: Manual Deployment (Copy Files)
@@ -57,20 +76,19 @@ This guide walks you through setting up your AWS EC2 instance to host the RevHub
     docker-compose -f docker-compose.yml up -d --build
     docker-compose -f docker-compose.frontend.yml up -d --build
     ```
-    *Note: This builds from source on the server, which is slow and high CPU usage.*
 
 ### Option B: Automated Deployment via Jenkins (Recommended)
 1.  **Configure Jenkins**:
-    -   Add your Docker Hub credentials in Jenkins.
-    -   Add your EC2 SSH Key (.pem) as a "SSH Username with private key" credential in Jenkins.
+    -   Add your **Docker Hub credentials** (User: `Harsh4801`) in Jenkins.
+    -   Add your **EC2 SSH Key** (.pem) as a "SSH Username with private key" credential in Jenkins (ID: `ec2-ssh-key-id`).
 2.  **Update Jenkinsfile**:
-    -   Uncomment the "Deploy to EC2" stage in the provided Jenkinsfile.
-    -   Replace `YOUR_EC2_IP` with your actual EC2 Public IP.
-    -   Replace `YOUR_DOCKERHUB_USER` with your Docker Hub username.
+    -   Ensure `DOCKER_HUB_USERNAME` is set to `Harsh4801`.
+    -   Update `EC2_IP` with your new Instance IP.
 3.  **Run Pipeline**:
     -   Jenkins will build artifacts, build Docker images, push them to Docker Hub.
-    -   Jenkins will SSH into EC2, pull those images, and restart the app.
+    -   Jenkins will SSH into EC2, **pull** those images, and restart the app.
 
 ## Troubleshooting
--   **Services Crashing?**: Check RAM usage with `htop` or `docker stats`. You might need a larger instance type.
+-   **Services Crashing?**: Check RAM usage with `htop` or `docker stats`. If you are on Free Tier and didn't enable Swap, this is guaranteed to fail.
 -   **Cannot Connect?**: Verify specific ports (8090, 4200) are open in the AWS Security Group.
+

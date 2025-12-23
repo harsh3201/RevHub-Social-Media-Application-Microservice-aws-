@@ -131,6 +131,7 @@ services:
       CONSUL_HOST: consul
       DB_HOST: mysql
       DB_PASSWORD: Harsh@4801
+      SOCIAL_SERVICE_HOST: social-service:8083
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       HOSTNAME: user-service
       SPRING_PROFILES_ACTIVE: docker
@@ -334,6 +335,7 @@ services:
 networks:
   revhub-network:
     driver: bridge
+    name: revhub-network
 
 volumes:
   mysql-data:

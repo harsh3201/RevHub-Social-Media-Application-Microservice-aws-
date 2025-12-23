@@ -1271,6 +1271,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   setProfileTab(tab: string) {
     this.profileActiveTab = tab;
+    if (tab === 'followers') {
+      this.loadFollowers();
+    } else if (tab === 'following') {
+      this.loadFollowing();
+    }
   }
 
   getRecentActivity(): any[] {
