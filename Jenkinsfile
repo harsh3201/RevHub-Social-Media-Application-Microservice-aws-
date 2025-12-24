@@ -142,7 +142,7 @@ pipeline {
 
                                 bat """
                                     "C:\\Windows\\System32\\OpenSSH\\ssh.exe" -o StrictHostKeyChecking=no -i private_key.pem %SSH_USER%@${EC2_IP} ^
-                                    "docker-compose pull && docker-compose down && docker-compose up -d"
+                                    "export DOCKER_HUB_USERNAME=${DOCKER_HUB_USERNAME} && docker-compose pull && docker-compose down && docker-compose up -d"
                                 """
                                 
                                 // 4. Cleanup
