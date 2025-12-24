@@ -53,7 +53,8 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    def services = [
+                    // 1. Build Backend Microservices (relies on docker-compose.yml configuration)
+                    def backendServices = [
                         'api-gateway',
                         'user-service',
                         'post-service',
@@ -65,11 +66,36 @@ pipeline {
                         'saga-orchestrator'
                     ]
 
-                    services.each { service ->
+                    backendServices.each { service ->
                         if (isUnix()) {
                             sh "docker-compose build ${service}"
                         } else {
                             bat "docker-compose build ${service}"
+                        }
+                    }
+
+                    // 2. Build Frontend Micro-Frontends (Manual build to ensure images exist for Push)
+                    // We do this manually so we don't need to enable 'build' in docker-compose.yml (keeping it clean for EC2)
+                    def frontendMap = [
+                        'revhub-shell-app':         'shell-app',
+                        'revhub-auth-mfe':          'auth-microfrontend',
+                        'revhub-feed-mfe':          'feed-microfrontend',
+                        'revhub-profile-mfe':       'profile-microfrontend',
+                        'revhub-chat-mfe':          'chat-microfrontend',
+                        'revhub-notifications-mfe': 'notifications-microfrontend'
+                    ]
+
+                    frontendMap.each { imageSuffix, dirName ->
+                        // Construct the full image tag to match what is defined in docker-compose.yml
+                        def fullImageName = "${env.DOCKER_HUB_USERNAME}/${imageSuffix}"
+                        def buildContext = "./frontend-services/${dirName}"
+
+                        echo "Building Frontend manually: ${fullImageName}"
+                        
+                        if (isUnix()) {
+                            sh "docker build -t ${fullImageName} ${buildContext}"
+                        } else {
+                            bat "docker build -t ${fullImageName} ${buildContext}"
                         }
                     }
                 }
