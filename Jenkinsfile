@@ -130,6 +130,7 @@ pipeline {
                                 bat 'copy /Y "%SSH_KEY%" private_key.pem'
                                 
                                 // 2. Restrict permissions (Remove inheritance, Grant only current user read access)
+                                // We use %USERNAME% which is the standard env var for the current user.
                                 bat 'icacls private_key.pem /inheritance:r /grant:r "%USERNAME%":R'
 
                                 // 3. Use the secured key file
