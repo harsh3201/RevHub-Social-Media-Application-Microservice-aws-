@@ -100,35 +100,39 @@ pipeline {
             }
         }
 
-        stage('Deploy to EC2') {
+        stage('Deploy to EC2 (NON-BLOCKING)') {
             steps {
-                withCredentials([
-                    sshUserPrivateKey(
-                        credentialsId: env.EC2_SSH_CREDENTIALS_ID,
-                        keyFileVariable: 'SSH_KEY',
-                        usernameVariable: 'SSH_USER'
-                    )
-                ]) {
-                    script {
-                        if (isUnix()) {
-                            sh """
-                                scp -o StrictHostKeyChecking=no -i \$SSH_KEY docker-compose.yml \
-                                    \$SSH_USER@${EC2_IP}:/home/ubuntu/docker-compose.yml
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    unstable('EC2 deployment failed, build is still successful')
 
-                                ssh -o StrictHostKeyChecking=no -i \$SSH_KEY \$SSH_USER@${EC2_IP} '
-                                    docker-compose pull
-                                    docker-compose down
-                                    docker-compose up -d
-                                '
-                            """
-                        } else {
-                            bat """
-                                scp -o StrictHostKeyChecking=no -i "%SSH_KEY%" docker-compose.yml ^
-                                    %SSH_USER%@${EC2_IP}:/home/ubuntu/docker-compose.yml
+                    withCredentials([
+                        sshUserPrivateKey(
+                            credentialsId: env.EC2_SSH_CREDENTIALS_ID,
+                            keyFileVariable: 'SSH_KEY',
+                            usernameVariable: 'SSH_USER'
+                        )
+                    ]) {
+                        script {
+                            if (isUnix()) {
+                                sh """
+                                    scp -o StrictHostKeyChecking=no -i \$SSH_KEY docker-compose.yml \
+                                        \$SSH_USER@${EC2_IP}:/home/ubuntu/docker-compose.yml
 
-                                ssh -o StrictHostKeyChecking=no -i "%SSH_KEY%" %SSH_USER%@${EC2_IP} ^
-                                "docker-compose pull && docker-compose down && docker-compose up -d"
-                            """
+                                    ssh -o StrictHostKeyChecking=no -i \$SSH_KEY \$SSH_USER@${EC2_IP} '
+                                        docker-compose pull
+                                        docker-compose down
+                                        docker-compose up -d
+                                    '
+                                """
+                            } else {
+                                bat """
+                                    scp -o StrictHostKeyChecking=no -i "%SSH_KEY%" docker-compose.yml ^
+                                        %SSH_USER%@${EC2_IP}:/home/ubuntu/docker-compose.yml
+
+                                    ssh -o StrictHostKeyChecking=no -i "%SSH_KEY%" %SSH_USER%@${EC2_IP} ^
+                                    "docker-compose pull && docker-compose down && docker-compose up -d"
+                                """
+                            }
                         }
                     }
                 }
@@ -141,10 +145,13 @@ pipeline {
             cleanWs()
         }
         success {
-            echo 'Deployment successful'
+            echo 'Build & Push successful'
+        }
+        unstable {
+            echo 'EC2 deployment failed, but build is valid'
         }
         failure {
-            echo 'Deployment failed'
+            echo 'Build failed'
         }
     }
 }
