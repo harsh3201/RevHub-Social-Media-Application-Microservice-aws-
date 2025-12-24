@@ -153,22 +153,42 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 echo 'Deploying to EC2 Instance...'
-                sshagent (credentials: ["${env.EC2_SSH_CREDENTIALS_ID}"]) {
-                    // Copy Compose Files to EC2
-                    sh "scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@${env.EC2_IP}:/home/ubuntu/docker-compose.yml"
-                    // ssh into EC2 and run deployment script commands
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@${env.EC2_IP} '
-                            export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME}
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: env.EC2_SSH_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                        if (isUnix()) {
+                             // Copy Compose Files to EC2
+                            sh "scp -o StrictHostKeyChecking=no -i $SSH_KEY docker-compose.yml ${SSH_USER}@${env.EC2_IP}:/home/ubuntu/docker-compose.yml"
+                            // ssh into EC2 and run deployment script commands
+                            sh """
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${SSH_USER}@${env.EC2_IP} '
+                                    export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME}
+                                    
+                                    # Pull latest images (Backend matches pushed, Frontend matches Docker Hub latest)
+                                    docker-compose -f docker-compose.yml pull
+                                    
+                                    # Restart Stack
+                                    docker-compose -f docker-compose.yml down
+                                    docker-compose -f docker-compose.yml up -d
+                                '
+                            """
+                        } else {
+                            // Windows Agent deployment
+                            // Write key to a temp file because ssh -i expects a file path
+                            // Note: SSH_KEY variable from withCredentials points to a temp file already on some agents, 
+                            // but on Windows standard command line it might be safer to ensure we have a file or use the provided variable path if valid.
+
+                            // IMPORTANT: On Windows, standard OpenSSH client is needed.
                             
-                            # Pull latest images (Backend matches pushed, Frontend matches Docker Hub latest)
-                            docker-compose -f docker-compose.yml pull
+                            // Copy docker-compose.yml
+                            bat "scp -o StrictHostKeyChecking=no -i \"%SSH_KEY%\" docker-compose.yml %SSH_USER%@%EC2_IP%:/home/ubuntu/docker-compose.yml"
                             
-                            # Restart Stack
-                            docker-compose -f docker-compose.yml down
-                            docker-compose -f docker-compose.yml up -d
-                        '
-                    """
+                            // Execute remote commands
+                            // We need to construct the remote command string carefully for Windows batch
+                            bat """
+                                ssh -o StrictHostKeyChecking=no -i \"%SSH_KEY%\" %SSH_USER%@%EC2_IP% "export DOCKER_HUB_USERNAME=%DOCKER_HUB_USERNAME% && docker-compose -f docker-compose.yml pull && docker-compose -f docker-compose.yml down && docker-compose -f docker-compose.yml up -d"
+                            """
+                        }
+                    }
                 }
             }
         }
