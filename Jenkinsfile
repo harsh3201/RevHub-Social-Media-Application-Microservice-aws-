@@ -103,7 +103,7 @@ pipeline {
         stage('Deploy to EC2 (NON-BLOCKING)') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    unstable('EC2 deployment failed, build is still successful')
+                    unstable('EC2 deployment failed, build is still valid')
 
                     withCredentials([
                         sshUserPrivateKey(
@@ -125,19 +125,22 @@ pipeline {
                                     '
                                 """
                             } else {
-                                // Windows Agent: Fix "Unprotected Private Key File" error
-                                // 1. Copy key content to a local file
+                                // --- WINDOWS DEPLOYMENT ---
+                                
+                                // 1. Copy key to local file (safest way to handle permissions)
                                 bat 'copy /Y "%SSH_KEY%" private_key.pem'
                                 
-                                // 2. Restrict permissions (Remove inheritance, Grant only current user read access)
-                                // We use %USERNAME% which is the standard env var for the current user.
-                                bat 'icacls private_key.pem /inheritance:r /grant:r "%USERNAME%":R'
-
-                                // 3. Use the secured key file
+                                // 2. Fix Permissions: Remove inheritance, Grant Administrators Read-Only
+                                // "Administrators" group is standard and includes Local System credentials
+                                bat 'icacls private_key.pem /inheritance:r /grant:r Administrators:R'
+                                
+                                // 3. Deploy
                                 bat """
                                     "C:\\Windows\\System32\\OpenSSH\\scp.exe" -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ^
                                         %SSH_USER%@${EC2_IP}:/home/ubuntu/docker-compose.yml
+                                """
 
+                                bat """
                                     "C:\\Windows\\System32\\OpenSSH\\ssh.exe" -o StrictHostKeyChecking=no -i private_key.pem %SSH_USER%@${EC2_IP} ^
                                     "docker-compose pull && docker-compose down && docker-compose up -d"
                                 """
