@@ -126,10 +126,10 @@ pipeline {
                                 """
                             } else {
                                 bat """
-                                    scp -o StrictHostKeyChecking=no -i "%SSH_KEY%" docker-compose.yml ^
+                                    "C:\\Windows\\System32\\OpenSSH\\scp.exe" -o StrictHostKeyChecking=no -i "%SSH_KEY%" docker-compose.yml ^
                                         %SSH_USER%@${EC2_IP}:/home/ubuntu/docker-compose.yml
 
-                                    ssh -o StrictHostKeyChecking=no -i "%SSH_KEY%" %SSH_USER%@${EC2_IP} ^
+                                    "C:\\Windows\\System32\\OpenSSH\\ssh.exe" -o StrictHostKeyChecking=no -i "%SSH_KEY%" %SSH_USER%@${EC2_IP} ^
                                     "docker-compose pull && docker-compose down && docker-compose up -d"
                                 """
                             }
