@@ -5,7 +5,7 @@ import com.revhub.userservice.dto.*;
 import com.revhub.userservice.model.User;
 import com.revhub.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.core.KafkaTemplate;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -21,7 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+
     private final RestTemplate restTemplate;
     private final EmailService emailService;
 

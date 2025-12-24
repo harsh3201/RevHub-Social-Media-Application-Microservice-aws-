@@ -53,7 +53,7 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                echo 'Building Docker Images (Sequentially one-by-one to save resources)...'
+                echo 'Building Docker Images (Backend Only - Frontend uses pre-built images)...'
                 script {
                     // List of services EXACTLY as they appear in docker-compose.yml
                     def backendServices = [
@@ -62,34 +62,17 @@ pipeline {
                         'notification-service', 'search-service', 'saga-orchestrator'
                     ]
                     
-                    def frontendServices = [
-                        'shell-app', 'auth-microfrontend', 'profile-microfrontend',
-                        'feed-microfrontend', 'chat-microfrontend', 'notifications-microfrontend'
-                    ]
-
                     if (isUnix()) {
                         // Build Backend Services one by one
                         backendServices.each { service ->
                             echo "Building Backend: ${service}..."
                             sh "docker-compose -f docker-compose.yml build ${service}"
                         }
-                        
-                        // Build Frontend Services one by one
-                        frontendServices.each { service ->
-                            echo "Building Frontend: ${service}..."
-                            sh "docker-compose -f docker-compose.frontend.yml build ${service}"
-                        }
                     } else {
                         // Build Backend Services one by one
                         backendServices.each { service ->
                             echo "Building Backend: ${service}..."
                             bat "docker-compose -f docker-compose.yml build ${service}"
-                        }
-                        
-                        // Build Frontend Services one by one
-                        frontendServices.each { service ->
-                            echo "Building Frontend: ${service}..."
-                            bat "docker-compose -f docker-compose.frontend.yml build ${service}"
                         }
                     }
                 }
@@ -104,8 +87,18 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: "${env.DOCKER_HUB_CREDENTIALS_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         if (isUnix()) {
                             sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                            sh 'docker-compose -f docker-compose.yml push'
-                            sh 'docker-compose -f docker-compose.frontend.yml push'
+                            // Only push the images we actually built (Backend typically). 
+                            // But running 'push' generally pushes checking all services. 
+                            // Since we commented out 'build' for frontend, docker-compose might not push them or push the pulled ones.
+                            // We will explicitly push backend services to save time and avoid error.
+                             def backendServices = [
+                                'api-gateway', 'user-service', 'post-service',
+                                'social-service', 'chat-service', 'feed-service',
+                                'notification-service', 'search-service', 'saga-orchestrator'
+                            ]
+                             backendServices.each { service ->
+                                sh "docker-compose -f docker-compose.yml push ${service}"
+                             }
                         } else {
                             // Revert to Batch as PowerShell is not available in PATH
                             // Login Strategy: Write token to file -> Type contents into docker login -> Delete file
@@ -126,8 +119,14 @@ pipeline {
                             
                             bat 'del docker_pass.txt'
                             
-                            bat 'docker-compose -f docker-compose.yml push'
-                            bat 'docker-compose -f docker-compose.frontend.yml push'
+                             def backendServices = [
+                                'api-gateway', 'user-service', 'post-service',
+                                'social-service', 'chat-service', 'feed-service',
+                                'notification-service', 'search-service', 'saga-orchestrator'
+                            ]
+                             backendServices.each { service ->
+                                bat "docker-compose -f docker-compose.yml push ${service}"
+                             }
                         }
                     }
                 }
@@ -140,23 +139,17 @@ pipeline {
                 sshagent (credentials: ["${env.EC2_SSH_CREDENTIALS_ID}"]) {
                     // Copy Compose Files to EC2
                     sh "scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@${env.EC2_IP}:/home/ubuntu/docker-compose.yml"
-                    sh "scp -o StrictHostKeyChecking=no docker-compose.frontend.yml ubuntu@${env.EC2_IP}:/home/ubuntu/docker-compose.frontend.yml"
                     // ssh into EC2 and run deployment script commands
                     sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${env.EC2_IP} '
                             export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME}
                             
-                            # Pull latest images
+                            # Pull latest images (Backend matches pushed, Frontend matches Docker Hub latest)
                             docker-compose -f docker-compose.yml pull
-                            docker-compose -f docker-compose.frontend.yml pull
                             
-                            # Restart Backend
+                            # Restart Stack
                             docker-compose -f docker-compose.yml down
                             docker-compose -f docker-compose.yml up -d
-                            
-                            # Restart Frontend
-                            docker-compose -f docker-compose.frontend.yml down
-                            docker-compose -f docker-compose.frontend.yml up -d
                         '
                     """
                 }

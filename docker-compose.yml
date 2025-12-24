@@ -332,6 +332,73 @@ services:
       - revhub-network
     restart: unless-stopped
 
+  # Frontend Micro-Frontends
+  shell-app:
+    # build:
+    #   context: ./frontend-services/shell-app
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-shell-app
+    container_name: revhub-shell-app
+    ports:
+      - "4200:80"
+    networks:
+      - revhub-network
+
+  auth-microfrontend:
+    # build:
+    #   context: ./frontend-services/auth-microfrontend
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-auth-mfe
+    container_name: revhub-auth-mfe
+    ports:
+      - "4201:80"
+    networks:
+      - revhub-network
+
+  feed-microfrontend:
+    # build:
+    #   context: ./frontend-services/feed-microfrontend
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-feed-mfe
+    container_name: revhub-feed-mfe
+    ports:
+      - "4202:80"
+    networks:
+      - revhub-network
+
+  profile-microfrontend:
+    # build:
+    #   context: ./frontend-services/profile-microfrontend
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-profile-mfe
+    container_name: revhub-profile-mfe
+    ports:
+      - "4203:80"
+    networks:
+      - revhub-network
+
+  chat-microfrontend:
+    # build:
+    #   context: ./frontend-services/chat-microfrontend
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-chat-mfe
+    container_name: revhub-chat-mfe
+    ports:
+      - "4204:80"
+    networks:
+      - revhub-network
+
+  notifications-microfrontend:
+    # build:
+    #   context: ./frontend-services/notifications-microfrontend
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME}/revhub-notifications-mfe
+    container_name: revhub-notifications-mfe
+    ports:
+      - "4205:80"
+    networks:
+      - revhub-network
+
 networks:
   revhub-network:
     driver: bridge
