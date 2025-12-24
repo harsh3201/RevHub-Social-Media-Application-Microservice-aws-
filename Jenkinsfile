@@ -6,7 +6,7 @@ pipeline {
         DOCKER_HUB_USERNAME = 'harsh4801' 
         DOCKER_HUB_CREDENTIALS_ID = 'docker-hub-token-id-new'
         EC2_SSH_CREDENTIALS_ID = 'ec2-ssh-key-id'
-        EC2_IP = '54.89.155.2'
+        EC2_IP = '3.231.75.61'
         
         COMPOSE_PROJECT_NAME = "revhub_cicd"
     }
