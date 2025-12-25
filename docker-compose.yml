@@ -73,7 +73,7 @@ services:
       retries: 5
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql
+      # - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - revhub-network
 
