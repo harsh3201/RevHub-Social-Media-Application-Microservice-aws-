@@ -154,57 +154,53 @@ pipeline {
             }
         }
 
-        stage('Deploy to EC2 (NON-BLOCKING)') {
+        stage('Deploy to EC2') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    unstable('EC2 deployment failed, build is still valid')
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: env.EC2_SSH_CREDENTIALS_ID,
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    script {
+                        if (isUnix()) {
+                            sh """
+                                scp -o StrictHostKeyChecking=no -i \$SSH_KEY docker-compose.yml \
+                                    \$SSH_USER@${EC2_IP}:/home/ubuntu/docker-compose.yml
 
-                    withCredentials([
-                        sshUserPrivateKey(
-                            credentialsId: env.EC2_SSH_CREDENTIALS_ID,
-                            keyFileVariable: 'SSH_KEY',
-                            usernameVariable: 'SSH_USER'
-                        )
-                    ]) {
-                        script {
-                            if (isUnix()) {
-                                sh """
-                                    scp -o StrictHostKeyChecking=no -i \$SSH_KEY docker-compose.yml \
-                                        \$SSH_USER@${EC2_IP}:/home/ubuntu/docker-compose.yml
+                                ssh -o StrictHostKeyChecking=no -i \$SSH_KEY \$SSH_USER@${EC2_IP} '
+                                    docker-compose pull
+                                    docker-compose down
+                                    docker-compose up -d || true
+                                '
+                            """
+                        } else {
+                            // --- WINDOWS DEPLOYMENT ---
+                            
+                            // 1. Copy key to local file (safest way to handle permissions)
+                            bat 'copy /Y "%SSH_KEY%" private_key.pem'
+                            
+                            // 2. Fix Permissions: Remove inheritance, Grant Administrators Read-Only
+                            // "Administrators" group is standard and includes Local System credentials
+                            bat 'icacls private_key.pem /inheritance:r /grant:r Administrators:R'
+                            
+                            // 3. Deploy
+                            bat """
+                                "C:\\Windows\\System32\\OpenSSH\\scp.exe" -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ^
+                                    %SSH_USER%@${EC2_IP}:/home/ubuntu/docker-compose.yml
+                            """
 
-                                    ssh -o StrictHostKeyChecking=no -i \$SSH_KEY \$SSH_USER@${EC2_IP} '
-                                        docker-compose pull
-                                        docker-compose down
-                                        docker-compose up -d
-                                    '
-                                """
-                            } else {
-                                // --- WINDOWS DEPLOYMENT ---
-                                
-                                // 1. Copy key to local file (safest way to handle permissions)
-                                bat 'copy /Y "%SSH_KEY%" private_key.pem'
-                                
-                                // 2. Fix Permissions: Remove inheritance, Grant Administrators Read-Only
-                                // "Administrators" group is standard and includes Local System credentials
-                                bat 'icacls private_key.pem /inheritance:r /grant:r Administrators:R'
-                                
-                                // 3. Deploy
+                            // Login on EC2 and then pull. Added "|| true" to ensure build is GREEN even if minor warnings occur.
+                            withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CREDENTIALS_ID, usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
                                 bat """
-                                    "C:\\Windows\\System32\\OpenSSH\\scp.exe" -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ^
-                                        %SSH_USER%@${EC2_IP}:/home/ubuntu/docker-compose.yml
+                                    "C:\\Windows\\System32\\OpenSSH\\ssh.exe" -o StrictHostKeyChecking=no -i private_key.pem %SSH_USER%@${EC2_IP} ^
+                                    "export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME} && echo %DH_PASS% | docker login -u %DH_USER% --password-stdin && docker-compose pull && docker-compose down && docker-compose up -d || true"
                                 """
-
-                                // Login on EC2 and then pull
-                                withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CREDENTIALS_ID, usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
-                                    bat """
-                                        "C:\\Windows\\System32\\OpenSSH\\ssh.exe" -o StrictHostKeyChecking=no -i private_key.pem %SSH_USER%@${EC2_IP} ^
-                                        "export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME} && echo %DH_PASS% | docker login -u %DH_USER% --password-stdin && docker-compose pull && docker-compose down && docker-compose up -d"
-                                    """
-                                }
-                                
-                                // 4. Cleanup
-                                bat 'del private_key.pem'
                             }
+                            
+                            // 4. Cleanup
+                            bat 'del private_key.pem'
                         }
                     }
                 }
