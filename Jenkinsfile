@@ -112,14 +112,43 @@ pipeline {
                     )
                 ]) {
                     script {
+                        // 1. Login to Docker Hub
                         if (isUnix()) {
                             sh 'docker logout || true'
                             sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                            sh 'docker-compose push'
                         } else {
                             bat 'docker logout || exit 0'
                             bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
-                            bat 'docker-compose push'
+                        }
+
+                        // 2. Push Backend (via Compose)
+                        // Explicitly set env var to ensure docker-compose interpolates image names correctly
+                        if (isUnix()) {
+                            sh "export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME} && docker-compose push"
+                        } else {
+                            bat "set DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME} && docker-compose push"
+                        }
+
+                        // 3. Push Frontend (Manual Push)
+                        // Must match the map used in 'Build Docker Images' stage
+                        def frontendMap = [
+                            'revhub-shell-app':         'shell-app',
+                            'revhub-auth-mfe':          'auth-microfrontend',
+                            'revhub-feed-mfe':          'feed-microfrontend',
+                            'revhub-profile-mfe':       'profile-microfrontend',
+                            'revhub-chat-mfe':          'chat-microfrontend',
+                            'revhub-notifications-mfe': 'notifications-microfrontend'
+                        ]
+
+                        frontendMap.each { imageSuffix, dirName ->
+                            def fullImageName = "${env.DOCKER_HUB_USERNAME}/${imageSuffix}"
+                            echo "Pushing Frontend manually: ${fullImageName}"
+                            
+                            if (isUnix()) {
+                                sh "docker push ${fullImageName}"
+                            } else {
+                                bat "docker push ${fullImageName}"
+                            }
                         }
                     }
                 }
