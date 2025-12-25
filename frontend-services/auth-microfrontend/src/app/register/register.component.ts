@@ -86,7 +86,7 @@ export class RegisterComponent {
   loading = false;
   showOtp = false;
   userEmail = '';
-  
+
   registerForm = this.fb.group({
     username: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
@@ -94,15 +94,15 @@ export class RegisterComponent {
     lastName: ['', Validators.required],
     password: ['', [Validators.required, Validators.minLength(6)]]
   });
-  
+
   otpForm = this.fb.group({
     otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
   });
-  
+
   onSubmit() {
     if (this.registerForm.valid) {
       this.loading = true;
-      this.http.post('http://localhost:8090/api/auth/register', this.registerForm.value).subscribe({
+      this.http.post('http://3.231.75.61:8090/api/auth/register', this.registerForm.value).subscribe({
         next: (response: any) => {
           this.loading = false;
           this.userEmail = this.registerForm.value.email || '';
@@ -116,11 +116,11 @@ export class RegisterComponent {
       });
     }
   }
-  
+
   onVerifyOtp() {
     if (this.otpForm.valid) {
       this.loading = true;
-      this.http.post('http://localhost:8090/api/auth/verify-otp', {
+      this.http.post('http://3.231.75.61:8090/api/auth/verify-otp', {
         email: this.userEmail,
         otp: this.otpForm.value.otp
       }).subscribe({

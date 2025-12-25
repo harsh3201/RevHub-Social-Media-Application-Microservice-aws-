@@ -72,7 +72,7 @@ export class ForgotPasswordComponent {
     this.successMessage = '';
     if (this.resetForm.valid) {
       const email = this.resetForm.value.email || '';
-      this.http.post('http://localhost:8090/api/auth/forgot-password', { email }).subscribe({
+      this.http.post('http://3.231.75.61:8090/api/auth/forgot-password', { email }).subscribe({
         next: (response: any) => {
           this.loading = false;
           this.successMessage = 'OTP sent to your email! Redirecting...';

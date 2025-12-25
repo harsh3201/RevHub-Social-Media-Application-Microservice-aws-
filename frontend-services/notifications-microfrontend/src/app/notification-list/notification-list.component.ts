@@ -52,11 +52,11 @@ export class NotificationListComponent implements OnInit {
   private http = inject(HttpClient);
   notifications: any[] = [];
   unreadCount = 0;
-  
+
   ngOnInit() {
     this.loadNotifications();
   }
-  
+
   loadNotifications() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     console.log('User from localStorage:', user);
@@ -66,7 +66,7 @@ export class NotificationListComponent implements OnInit {
       console.error('No user found in localStorage');
       return;
     }
-    const url = `http://localhost:8090/api/notifications/${userId}`;
+    const url = `http://3.231.75.61:8090/api/notifications/${userId}`;
     console.log('Fetching notifications from:', url);
     this.http.get<any[]>(url).subscribe({
       next: (data) => {
@@ -80,16 +80,16 @@ export class NotificationListComponent implements OnInit {
       }
     });
   }
-  
+
   markAsRead(notificationId: string) {
-    this.http.put(`http://localhost:8090/api/notifications/${notificationId}/read`, {}).subscribe({
+    this.http.put(`http://3.231.75.61:8090/api/notifications/${notificationId}/read`, {}).subscribe({
       next: () => this.loadNotifications(),
       error: (error) => console.error('Error marking as read:', error)
     });
   }
-  
+
   getIcon(type: string): string {
-    switch(type) {
+    switch (type) {
       case 'LIKE': return 'favorite';
       case 'COMMENT': return 'comment';
       case 'FOLLOW': return 'person_add';
@@ -97,9 +97,9 @@ export class NotificationListComponent implements OnInit {
       default: return 'notifications';
     }
   }
-  
+
   getIconColor(type: string): string {
-    switch(type) {
+    switch (type) {
       case 'LIKE': return 'warn';
       case 'COMMENT': return 'primary';
       case 'FOLLOW': return 'accent';

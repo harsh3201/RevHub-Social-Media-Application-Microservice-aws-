@@ -70,7 +70,7 @@ export class LoginComponent {
   onSubmit() {
     this.loading = true;
     if (this.loginForm.valid) {
-      this.http.post('http://localhost:8090/api/users/login', this.loginForm.value).subscribe({
+      this.http.post('http://3.231.75.61:8090/api/users/login', this.loginForm.value).subscribe({
         next: (response: any) => {
           localStorage.setItem('token', response.token);
           localStorage.setItem('user', JSON.stringify(response.user));

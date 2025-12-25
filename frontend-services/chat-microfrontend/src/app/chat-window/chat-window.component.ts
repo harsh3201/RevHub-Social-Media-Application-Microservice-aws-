@@ -48,25 +48,25 @@ export class ChatWindowComponent implements OnInit {
   private http = inject(HttpClient);
   messages: any[] = [];
   currentUser = '';
-  
+
   messageForm = this.fb.group({
     content: ['', Validators.required]
   });
-  
+
   ngOnInit() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     this.currentUser = user.username;
     this.loadMessages();
   }
-  
+
   loadMessages() {
     // For demo, load conversation with a test user
-    this.http.get<any[]>(`http://localhost:8090/api/chat/conversation?user1=${this.currentUser}&user2=testuser`).subscribe({
+    this.http.get<any[]>(`http://3.231.75.61:8090/api/chat/conversation?user1=${this.currentUser}&user2=testuser`).subscribe({
       next: (data) => this.messages = data,
       error: (error) => console.error('Error loading messages:', error)
     });
   }
-  
+
   sendMessage() {
     if (this.messageForm.valid) {
       const messageData = {
@@ -74,8 +74,8 @@ export class ChatWindowComponent implements OnInit {
         receiverUsername: 'testuser',
         content: this.messageForm.value.content
       };
-      
-      this.http.post('http://localhost:8090/api/chat/send', messageData).subscribe({
+
+      this.http.post('http://3.231.75.61:8090/api/chat/send', messageData).subscribe({
         next: () => {
           this.messageForm.reset();
           this.loadMessages();
@@ -84,7 +84,7 @@ export class ChatWindowComponent implements OnInit {
       });
     }
   }
-  
+
   formatTimestamp(timestamp: string): string {
     const date = new Date(timestamp);
     return date.toLocaleString('en-IN', {

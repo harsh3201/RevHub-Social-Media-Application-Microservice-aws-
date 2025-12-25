@@ -108,7 +108,7 @@ export class ResetPasswordComponent {
     this.loading = true;
     if (this.resetForm.valid) {
       const { email, otp, newPassword } = this.resetForm.value;
-      this.http.post('http://localhost:8090/api/auth/reset-password', { email, otp, newPassword }).subscribe({
+      this.http.post('http://3.231.75.61:8090/api/auth/reset-password', { email, otp, newPassword }).subscribe({
         next: (response: any) => {
           this.loading = false;
           alert('Password reset successfully! You can now login with your new password.');
