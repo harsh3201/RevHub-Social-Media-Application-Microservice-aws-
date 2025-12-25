@@ -17,9 +17,9 @@ export interface Post {
   providedIn: 'root'
 })
 export class FeedService {
-  private apiUrl = 'http://localhost:8090/api';
+  private apiUrl = 'http://3.231.75.61:8090/api/feeds';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getFeed(page: number = 0, size: number = 10): Observable<any> {
     return this.http.get(`${this.apiUrl}/feed?page=${page}&size=${size}`);

@@ -17,7 +17,8 @@ export interface ChatMessage {
   providedIn: 'root'
 })
 export class ChatService {
-  private apiUrl = 'http://localhost:8090/api/chat';
+  private apiUrl = 'http://3.231.75.61:8090/api/chats';
+  private wsUrl = 'http://3.231.75.61:8090/ws';
   private stompClient: Client | null = null;
   private messageSubject = new Subject<ChatMessage>();
   public messages$ = this.messageSubject.asObservable();

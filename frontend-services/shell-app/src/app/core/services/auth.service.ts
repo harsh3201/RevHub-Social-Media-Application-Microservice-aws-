@@ -26,7 +26,7 @@ export interface JwtResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8090/api/auth';
+  private apiUrl = 'http://3.231.75.61:8090/api/auth';
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 

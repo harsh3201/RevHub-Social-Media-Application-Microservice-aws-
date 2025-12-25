@@ -6,10 +6,10 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class PostService {
-  private apiUrl = 'http://localhost:8090/api/posts';
-  private socialUrl = 'http://localhost:8090/api/social';
+  private apiUrl = 'http://3.231.75.61:8090/api/posts';
+  private socialUrl = 'http://3.231.75.61:8090/api/social';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getPosts(page: number = 0, size: number = 10, feedType: string = 'universal'): Observable<any> {
     const username = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).username : '';

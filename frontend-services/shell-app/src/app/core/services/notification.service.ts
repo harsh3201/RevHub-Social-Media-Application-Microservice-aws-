@@ -16,9 +16,9 @@ export interface Notification {
   providedIn: 'root'
 })
 export class NotificationService {
-  private apiUrl = 'http://localhost:8090/api/notifications';
+  private apiUrl = 'http://3.231.75.61:8090/api/notifications';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getNotifications(): Observable<Notification[]> {
     const user = JSON.parse(localStorage.getItem('user') || '{}');

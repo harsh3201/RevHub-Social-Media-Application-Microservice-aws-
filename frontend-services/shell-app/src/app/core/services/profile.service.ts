@@ -20,9 +20,10 @@ export interface User {
   providedIn: 'root'
 })
 export class ProfileService {
-  private apiUrl = 'http://localhost:8090/api';
+  private apiUrl = 'http://3.231.75.61:8090/api';
+  private uploadUrl = 'http://3.231.75.61:8090/api/users/profile-picture';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getProfile(username: string): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/users/${username}`);
