@@ -195,10 +195,13 @@ pipeline {
                                         %SSH_USER%@${EC2_IP}:/home/ubuntu/docker-compose.yml
                                 """
 
-                                bat """
-                                    "C:\\Windows\\System32\\OpenSSH\\ssh.exe" -o StrictHostKeyChecking=no -i private_key.pem %SSH_USER%@${EC2_IP} ^
-                                    "export DOCKER_HUB_USERNAME=${DOCKER_HUB_USERNAME} && docker-compose pull && docker-compose down && docker-compose up -d"
-                                """
+                                // Login on EC2 and then pull
+                                withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CREDENTIALS_ID, usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+                                    bat """
+                                        "C:\\Windows\\System32\\OpenSSH\\ssh.exe" -o StrictHostKeyChecking=no -i private_key.pem %SSH_USER%@${EC2_IP} ^
+                                        "export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME} && echo %DH_PASS% | docker login -u %DH_USER% --password-stdin && docker-compose pull && docker-compose down && docker-compose up -d"
+                                    """
+                                }
                                 
                                 // 4. Cleanup
                                 bat 'del private_key.pem'
