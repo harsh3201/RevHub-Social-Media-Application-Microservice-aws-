@@ -121,12 +121,11 @@ pipeline {
                             bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
                         }
 
-                        // 2. Push Backend (via Compose)
-                        // Explicitly set env var to ensure docker-compose interpolates image names correctly
+                        // 2. Push Backend (and any Compose-managed services)
                         if (isUnix()) {
-                            sh "export DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME} && docker-compose push"
+                            sh "docker-compose push"
                         } else {
-                            bat "set DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME} && docker-compose push"
+                            bat "docker-compose push"
                         }
 
                         // 3. Push Frontend (Manual Push)
