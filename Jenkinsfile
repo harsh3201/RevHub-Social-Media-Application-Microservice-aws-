@@ -215,9 +215,6 @@ pipeline {
         success {
             echo 'Build & Push successful'
         }
-        unstable {
-            echo 'EC2 deployment failed, but build is valid'
-        }
         failure {
             echo 'Build failed'
         }
